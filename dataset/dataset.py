@@ -28,3 +28,7 @@ def get_images_path_and_name(path = "./images/"):
     df = pd.DataFrame.from_records(images)
     
     return df
+
+def get_labels(image_df):
+    labels = image_df["name"].unique()
+    return labels
