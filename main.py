@@ -1,5 +1,5 @@
 from dataset.dataset import get_images_path_and_name, get_labels
-from retinaface.RetinaFace import build_model, extract_faces, detect_faces
+from retinaface_copy.RetinaFace import build_model, extract_faces, detect_faces
 
 def main():
     train_img_df = get_images_path_and_name("./dataset/images/")
