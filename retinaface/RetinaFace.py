@@ -86,6 +86,15 @@ def detect_faces(img_path, threshold=0.9, model = None, allow_upscaling = True):
     landmarks_list = []
     im_tensor, im_info, im_scale = preprocess.preprocess_image(img, allow_upscaling)
     net_out = model(im_tensor)
+
+    # print('net_out')
+    # print(len(net_out))
+
+    '''
+    for i in net_out:
+        print(i.shape)
+    '''
+    
     net_out = [elt.numpy() for elt in net_out]
     sym_idx = 0
 

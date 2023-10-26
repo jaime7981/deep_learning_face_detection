@@ -5,31 +5,45 @@ from retinaface.RetinaFace import build_model
 class FaceRecognitionModel(tf.keras.Model):
     def __init__(self, num_classes):
         super(FaceRecognitionModel, self).__init__()
-        self.retinaface_model = build_model()
-        self.num_classes = num_classes
-        self.recognition_model = self.build_recognition_model(num_classes)
 
-    def build_recognition_model(self, num_classes):
-        model = tf.keras.Sequential([
-            tf.keras.layers.Flatten(),
-            tf.keras.layers.Dense(128, activation='relu'),
-            tf.keras.layers.Dense(num_classes, activation='softmax')
-        ])
-        return model
+        self.num_classes = num_classes
+
+        self.retinaface_model = build_model()
+        self.concatenated_retinaface_output = self.build_concatenate_retinaface_output(self.retinaface_model)
+        
+        self.recognition_model = self.recognition_model_from_retina(self.concatenated_retinaface_output)
+        
+        self.model = tf.keras.Model(
+            inputs=self.retinaface_model.inputs, 
+            outputs=self.recognition_model.outputs
+        )
+
+
+    def build_concatenate_retinaface_output(self, retinaface_model):
+        feature_maps = retinaface_model.outputs
+        concatenated = tf.keras.layers.Concatenate(axis=-1)(feature_maps)
+        return concatenated
+
+
+    def recognition_model_from_retina(self, retinaface_features):
+        flatten_layer = tf.keras.layers.Flatten()(retinaface_features)
+        dense1 = tf.keras.layers.Dense(128, activation='relu')(flatten_layer)
+        output = tf.keras.layers.Dense(self.num_classes, activation='softmax')(dense1)
+        return output
+
 
     def call(self, inputs):
-        # Detect faces using RetinaFace
-        face_detections = self.retinaface_model(inputs)
-        
-        # Initialize an empty list to store face labels
-        face_labels = []
+        retinaface_features = self.retinaface_model(inputs)
+        recognition_output = self.recognition_model(retinaface_features)
+        return recognition_output
 
-        for feature_map in face_detections:
-            # Reshape feature maps to (batch_size, num_features)
-            feature_map = tf.reshape(feature_map, (feature_map.shape[0], -1))
+'''
+def call(self, inputs):
+    retinaface_features = self.retinaface_model(inputs)
 
-            # Pass the reshaped feature map through the recognition model
-            face_label = self.recognition_model(feature_map)
-            face_labels.append(face_label)
+    flatten_layer = tf.keras.layers.Flatten()(retinaface_features)
+    dense1 = tf.keras.layers.Dense(128, activation='relu')(flatten_layer)
+    recognition_output = tf.keras.layers.Dense(self.num_classes, activation='softmax')(dense1)
 
-        return face_labels
+    return recognition_output
+'''
